@@ -348,7 +348,7 @@ export const PublicInstanceProxyHandlers: ProxyHandler<any> = {
         accessCache![key] = AccessTypes.OTHER
       }
     }
-
+    // 处理key以$开头的情况
     const publicGetter = publicPropertiesMap[key]
     let cssModule, globalProperties
     // public $xxx properties

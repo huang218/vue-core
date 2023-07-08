@@ -198,28 +198,49 @@ function createSetter(shallow = false) {
     return result
   }
 }
-
+/**
+ * 用于拦截从target删除某个属性的操作（delete target.xxx）
+ * @param target
+ * @param key
+ * @returns
+ */
 function deleteProperty(target: object, key: string | symbol): boolean {
+  // 判断target是否包含key键
   const hadKey = hasOwn(target, key)
+  // 缓存记录key值
   const oldValue = (target as any)[key]
+  // 调用reflect删除该key键
   const result = Reflect.deleteProperty(target, key)
   if (result && hadKey) {
+    // 记录trigger ==> 触发后续删除更新
     trigger(target, TriggerOpTypes.DELETE, key, undefined, oldValue)
   }
   return result
 }
-
+/**
+ * 于拦截判断某个key是否存在于target的操作（xxx in target）
+ * @param target
+ * @param key
+ * @returns
+ */
 function has(target: object, key: string | symbol): boolean {
+  // 获取是否有key键 的结果
   const result = Reflect.has(target, key)
+  // 判断key不是symbol ｜ 是symbol 看在不在builtInSumbol中
   if (!isSymbol(key) || !builtInSymbols.has(key)) {
-    track(target, TrackOpTypes.HAS, key)
+    track(target, TrackOpTypes.HAS, key) // 收集依赖
   }
   return result
 }
-
+/**
+ * 用于拦截遍历的操作（for in、for of...）
+ * @param target
+ * @returns
+ */
 function ownKeys(target: object): (string | symbol)[] {
+  // 收集依赖
   track(target, TrackOpTypes.ITERATE, isArray(target) ? 'length' : ITERATE_KEY)
-  return Reflect.ownKeys(target)
+  return Reflect.ownKeys(target) // 返回结果
 }
 
 export const mutableHandlers: ProxyHandler<object> = {

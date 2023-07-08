@@ -663,9 +663,11 @@ export function setupComponent(
 
   const { props, children } = instance.vnode
   const isStateful = isStatefulComponent(instance)
+  // 初始化props solts
   initProps(instance, props, isStateful, isSSR)
   initSlots(instance, children)
 
+  // 判断组件是否是有状态的组件
   const setupResult = isStateful
     ? setupStatefulComponent(instance, isSSR)
     : undefined
@@ -678,17 +680,19 @@ function setupStatefulComponent(
   isSSR: boolean
 ) {
   const Component = instance.type as ComponentOptions
-
   if (__DEV__) {
+    // 开发模式校验名称规范
     if (Component.name) {
       validateComponentName(Component.name, instance.appContext.config)
     }
+    // 遍历校验局部注册组件名称规范
     if (Component.components) {
       const names = Object.keys(Component.components)
       for (let i = 0; i < names.length; i++) {
         validateComponentName(names[i], instance.appContext.config)
       }
     }
+    // 校验指令名称规范
     if (Component.directives) {
       const names = Object.keys(Component.directives)
       for (let i = 0; i < names.length; i++) {
@@ -707,6 +711,7 @@ function setupStatefulComponent(
   instance.accessCache = Object.create(null)
   // 1. create public instance / render proxy
   // also mark it raw so it's never observed
+  // ctx 上下文代理
   instance.proxy = markRaw(new Proxy(instance.ctx, PublicInstanceProxyHandlers))
   if (__DEV__) {
     exposePropsOnRenderContext(instance)
@@ -714,18 +719,23 @@ function setupStatefulComponent(
   // 2. call setup()
   const { setup } = Component
   if (setup) {
+    // 创建setup上下文
     const setupContext = (instance.setupContext =
       setup.length > 1 ? createSetupContext(instance) : null)
-
+    // 设置当前实例
     setCurrentInstance(instance)
+    // 停止依赖收集
     pauseTracking()
+    // 调用setup hook 选项式API
     const setupResult = callWithErrorHandling(
       setup,
       instance,
       ErrorCodes.SETUP_FUNCTION,
       [__DEV__ ? shallowReadonly(instance.props) : instance.props, setupContext]
     )
+    // 重置shouldTrack
     resetTracking()
+    // 重置当前实例
     unsetCurrentInstance()
 
     if (isPromise(setupResult)) {
@@ -771,6 +781,7 @@ export function handleSetupResult(
   setupResult: unknown,
   isSSR: boolean
 ) {
+  // 是否为函数
   if (isFunction(setupResult)) {
     // setup returned an inline render function
     if (__SSR__ && (instance.type as ComponentOptions).__ssrInlineRender) {
@@ -781,6 +792,8 @@ export function handleSetupResult(
       instance.render = setupResult as InternalRenderFunction
     }
   } else if (isObject(setupResult)) {
+    // 是否为对象
+    // 是否为vnode
     if (__DEV__ && isVNode(setupResult)) {
       warn(
         `setup() should not return VNodes directly - ` +

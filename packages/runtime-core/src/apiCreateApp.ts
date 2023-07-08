@@ -209,7 +209,7 @@ export function createAppAPI<HostElement>(
       __DEV__ && warn(`root props passed to app.mount() must be an object.`)
       rootProps = null
     }
-
+    // 创建应用上下文对象
     const context = createAppContext()
 
     // TODO remove in 3.4
