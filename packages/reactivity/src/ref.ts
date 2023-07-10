@@ -36,7 +36,7 @@ type RefBase<T> = {
   dep?: Dep
   value: T
 }
-
+// 收集依赖
 export function trackRefValue(ref: RefBase<any>) {
   if (shouldTrack && activeEffect) {
     ref = toRaw(ref)
@@ -51,7 +51,7 @@ export function trackRefValue(ref: RefBase<any>) {
     }
   }
 }
-
+// 触发依赖
 export function triggerRefValue(ref: RefBase<any>, newVal?: any) {
   ref = toRaw(ref)
   const dep = ref.dep
@@ -71,6 +71,7 @@ export function triggerRefValue(ref: RefBase<any>, newVal?: any) {
 
 /**
  * Checks if a value is a ref object.
+ * 是否为ref
  *
  * @param r - The value to inspect.
  * @see {@link https://vuejs.org/api/reactivity-utilities.html#isref}
@@ -83,7 +84,8 @@ export function isRef(r: any): r is Ref {
 /**
  * Takes an inner value and returns a reactive and mutable ref object, which
  * has a single property `.value` that points to the inner value.
- *
+ * 获取一个内部值并返回一个反应的可变ref对象，该对象
+ * 具有指向内部值的单个属性“.value”。
  * @param value - The object to wrap in the ref.
  * @see {@link https://vuejs.org/api/reactivity-core.html#ref}
  */
@@ -124,7 +126,14 @@ export function shallowRef(value?: unknown) {
   return createRef(value, true)
 }
 
+/**
+ * 创建Ref
+ * @param rawValue 值
+ * @param shallow  true= 浅层Ref（shallowRef）  false = 深层Ref
+ * @returns
+ */
 function createRef(rawValue: unknown, shallow: boolean) {
+  // 如果已经是ref 则返回
   if (isRef(rawValue)) {
     return rawValue
   }
@@ -142,7 +151,7 @@ class RefImpl<T> {
     this._rawValue = __v_isShallow ? value : toRaw(value)
     this._value = __v_isShallow ? value : toReactive(value)
   }
-
+  // 下面get是对value的代理， 递归遍历整个代理是toReactive
   get value() {
     trackRefValue(this)
     return this._value

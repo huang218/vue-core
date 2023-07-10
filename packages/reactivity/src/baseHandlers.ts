@@ -91,8 +91,10 @@ function hasOwnProperty(this: object, key: string) {
   return obj.hasOwnProperty(key)
 }
 
+// proxy-get
 function createGetter(isReadonly = false, shallow = false) {
   return function get(target: Target, key: string | symbol, receiver: object) {
+    // vue内部字段特殊处理
     if (key === ReactiveFlags.IS_REACTIVE) {
       return !isReadonly
     } else if (key === ReactiveFlags.IS_READONLY) {
@@ -131,10 +133,11 @@ function createGetter(isReadonly = false, shallow = false) {
       return res
     }
 
+    // 非只读 依赖收集
     if (!isReadonly) {
       track(target, TrackOpTypes.GET, key)
     }
-
+    // 浅层
     if (shallow) {
       return res
     }
@@ -190,9 +193,9 @@ function createSetter(shallow = false) {
     // don't trigger if target is something up in the prototype chain of original
     if (target === toRaw(receiver)) {
       if (!hadKey) {
-        trigger(target, TriggerOpTypes.ADD, key, value)
+        trigger(target, TriggerOpTypes.ADD, key, value) // add新字段
       } else if (hasChanged(value, oldValue)) {
-        trigger(target, TriggerOpTypes.SET, key, value, oldValue)
+        trigger(target, TriggerOpTypes.SET, key, value, oldValue) // set
       }
     }
     return result

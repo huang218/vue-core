@@ -100,7 +100,7 @@ export class ReactiveEffect<T = any> {
       activeEffect = this
       shouldTrack = true
 
-      trackOpBit = 1 << ++effectTrackDepth
+      trackOpBit = 1 << ++effectTrackDepth // 1 2 4 8 16 32 64 128 256 。。。
 
       if (effectTrackDepth <= maxMarkerBits) {
         initDepMarkers(this)
@@ -206,12 +206,13 @@ export function effect<T = any>(
 export function stop(runner: ReactiveEffectRunner) {
   runner.effect.stop()
 }
-
+// 是否进行依赖收集的判断
 export let shouldTrack = true
 const trackStack: boolean[] = []
 
 /**
  * Temporarily pauses tracking.
+ * 暂时暂停收集
  */
 export function pauseTracking() {
   trackStack.push(shouldTrack)
@@ -220,6 +221,7 @@ export function pauseTracking() {
 
 /**
  * Re-enables effect tracking (if it was paused).
+ * 重新启用效果跟踪（如果已暂停）
  */
 export function enableTracking() {
   trackStack.push(shouldTrack)
@@ -228,6 +230,7 @@ export function enableTracking() {
 
 /**
  * Resets the previous global effect tracking state.
+ * 重置以前的全局效果跟踪状态
  */
 export function resetTracking() {
   const last = trackStack.pop()
@@ -295,9 +298,8 @@ export function trackEffects(
 }
 
 /**
- * Finds all deps associated with the target (or a specific property) and
- * triggers the effects stored within.
- *
+ * Finds all deps associated with the target (or a specific property) and  查找与目标（或特定属性）关联的所有dep，并
+ * triggers the effects stored within. 触发存储在其中的效果。
  * @param target - The reactive object.
  * @param type - Defines the type of the operation that needs to trigger effects.
  * @param key - Can be used to target a specific reactive property in the target object.
@@ -310,7 +312,7 @@ export function trigger(
   oldValue?: unknown,
   oldTarget?: Map<unknown, unknown> | Set<unknown>
 ) {
-  const depsMap = targetMap.get(target)
+  const depsMap = targetMap.get(target) // 取出weakMap里的deps（Map）
   if (!depsMap) {
     // never been tracked
     return
@@ -318,8 +320,9 @@ export function trigger(
 
   let deps: (Dep | undefined)[] = []
   if (type === TriggerOpTypes.CLEAR) {
-    // collection being cleared
-    // trigger all effects for target
+    // type === clear
+    // collection being cleared  正在清除集合
+    // trigger all effects for target 触发目标的所有效果
     deps = [...depsMap.values()]
   } else if (key === 'length' && isArray(target)) {
     const newLength = Number(newValue)

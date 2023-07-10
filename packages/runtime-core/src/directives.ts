@@ -63,8 +63,10 @@ export type Directive<T = any, V = any> =
 
 export type DirectiveModifiers = Record<string, boolean>
 
+// 自定义指令名称校验
 export function validateDirectiveName(name: string) {
   if (isBuiltInDirective(name)) {
+    // 如果是vue内部使用的指令关键字则报错
     warn('Do not use built-in directive ids as custom directive id: ' + name)
   }
 }

@@ -252,14 +252,17 @@ export function createAppAPI<HostElement>(
           )
         }
       },
-
+      // 安装插件
       use(plugin: Plugin, ...options: any[]) {
+        // 判断已安装插件
         if (installedPlugins.has(plugin)) {
           __DEV__ && warn(`Plugin has already been applied to target app.`)
         } else if (plugin && isFunction(plugin.install)) {
-          installedPlugins.add(plugin)
-          plugin.install(app, ...options)
+          // 有插件、plugin对象中有install函数
+          installedPlugins.add(plugin) // 插件push进Set集合
+          plugin.install(app, ...options) // 初始化plugin
         } else if (isFunction(plugin)) {
+          // plugin本身为函数
           installedPlugins.add(plugin)
           plugin(app, ...options)
         } else if (__DEV__) {
@@ -305,13 +308,14 @@ export function createAppAPI<HostElement>(
         if (__DEV__) {
           validateDirectiveName(name)
         }
-
+        // 只有名称没有directive，则表示要获取指令
         if (!directive) {
           return context.directives[name] as any
         }
         if (__DEV__ && context.directives[name]) {
           warn(`Directive "${name}" has already been registered in target app.`)
         }
+        // 存储指令
         context.directives[name] = directive
         return app
       },
@@ -330,6 +334,7 @@ export function createAppAPI<HostElement>(
                 ` you need to unmount the previous app by calling \`app.unmount()\` first.`
             )
           }
+          // const vnode = createVNode(rootComponent === App, rootProps ?=== props)
           const vnode = createVNode(rootComponent, rootProps)
           // store app context on the root VNode.
           // this will be set on the root instance on initial mount.
