@@ -494,6 +494,7 @@ function createBaseVNode(
     warn(`VNode created with invalid key (NaN). VNode type:`, vnode.type)
   }
 
+  // 2023-08-28
   // track vnode for block tree
   if (
     isBlockTreeEnabled > 0 &&
