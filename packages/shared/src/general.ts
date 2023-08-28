@@ -17,6 +17,9 @@ export const isOn = (key: string) => onRE.test(key)
 
 export const isModelListener = (key: string) => key.startsWith('onUpdate:')
 
+/**
+ * 浅拷贝可枚举属性
+ */
 export const extend = Object.assign
 
 export const remove = <T>(arr: T[], el: T) => {

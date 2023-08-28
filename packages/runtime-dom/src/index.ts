@@ -29,9 +29,11 @@ declare module '@vue/reactivity' {
     runtimeDOMBailTypes: Node | Window
   }
 }
-
+// nodeOps dom方法
 const rendererOptions = /*#__PURE__*/ extend({ patchProp }, nodeOps)
 
+//懒惰地创建渲染器-这使得核心渲染器逻辑树不稳定
+//以防用户仅从Vue导入反应性实用程序。
 // lazy create the renderer - this makes core renderer logic tree-shakable
 // in case the user only imports reactivity utilities from Vue.
 let renderer: Renderer<Element | ShadowRoot> | HydrationRenderer
@@ -62,6 +64,7 @@ export const hydrate = ((...args) => {
   ensureHydrationRenderer().hydrate(...args)
 }) as RootHydrateFunction
 
+// Vue 入口函数
 export const createApp = ((...args) => {
   // 先创建渲染器 再创建app
   const app = ensureRenderer().createApp(...args)
@@ -70,8 +73,10 @@ export const createApp = ((...args) => {
     injectNativeTagCheck(app)
     injectCompilerOptionsCheck(app)
   }
-  // 重写mount 方法
   const { mount } = app
+
+  // 重写mount 方法
+  // app挂载函数
   app.mount = (containerOrSelector: Element | ShadowRoot | string): any => {
     const container = normalizeContainer(containerOrSelector)
     if (!container) return

@@ -135,6 +135,7 @@ export function queuePostFlushCb(cb: SchedulerJobs) {
 
 export function flushPreFlushCbs(
   seen?: CountMap,
+  //如果当前正在刷新，则跳过当前作业本身
   // if currently flushing, skip the current job itself
   i = isFlushing ? flushIndex + 1 : 0
 ) {

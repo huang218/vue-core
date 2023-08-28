@@ -54,6 +54,10 @@ export const SuspenseImpl = {
   // directly in the renderer. The renderer checks for the __isSuspense flag
   // on a vnode's type and calls the `process` method, passing in renderer
   // internals.
+  //为了使Suspense树不可动摇，我们需要避免导入它
+  //直接在渲染器中。渲染器检查__isSuspense标志
+  //在vnode的类型上，并调用“process”方法，传入呈现器
+  //内部构件
   __isSuspense: true,
   process(
     n1: VNode | null,
@@ -762,16 +766,32 @@ function hydrateSuspense(
 }
 
 function normalizeSuspenseChildren(vnode: VNode) {
-  const { shapeFlag, children } = vnode
-  const isSlotChildren = shapeFlag & ShapeFlags.SLOTS_CHILDREN
+  // <Suspense>
+  //   <!-- 具有深层异步依赖的组件 -->
+  //   <Dashboard /> --> default Slot
+
+  //   <!-- 在 #fallback 插槽中显示 “正在加载中” -->
+  //   <template #fallback> --> fallback Slot
+  //     Loading...
+  //   </template>
+  // </Suspense>
+  const { shapeFlag, children } = vnode // vnode 解构 shapeFlag(特征标识) 和 子节点
+  const isSlotChildren = shapeFlag & ShapeFlags.SLOTS_CHILDREN // slot children 是否有slot插槽
+
+  // 有slot插槽时获取default默认插槽，并规范化Slot
   vnode.ssContent = normalizeSuspenseSlot(
     isSlotChildren ? (children as Slots).default : children
   )
+  // 有slot插槽时获取fallback插槽，并规范fallback
   vnode.ssFallback = isSlotChildren
     ? normalizeSuspenseSlot((children as Slots).fallback)
     : createVNode(Comment)
 }
-
+/**
+ * 规范化Suspense插槽内容
+ * @param s
+ * @returns
+ */
 function normalizeSuspenseSlot(s: any) {
   let block: VNode[] | null | undefined
   if (isFunction(s)) {
@@ -780,6 +800,9 @@ function normalizeSuspenseSlot(s: any) {
       // disableTracking: false
       // allow block tracking for compiled slots
       // (see ./componentRenderContext.ts)
+      //disableTracking:false
+      //允许对已编译的插槽进行块跟踪
+      //（请参见./componentRenderContext.ts）
       s._d = false
       openBlock()
     }
@@ -793,12 +816,14 @@ function normalizeSuspenseSlot(s: any) {
   if (isArray(s)) {
     const singleChild = filterSingleRoot(s)
     if (__DEV__ && !singleChild) {
+      // ＜Suspense＞插槽需要一个根节点。
       warn(`<Suspense> slots expect a single root node.`)
     }
     s = singleChild
   }
-  s = normalizeVNode(s)
+  s = normalizeVNode(s) // 规范化插槽vnode并创建vnode
   if (block && !s.dynamicChildren) {
+    // 更新dynamicChildren是否动态参数
     s.dynamicChildren = block.filter(c => c !== s)
   }
   return s

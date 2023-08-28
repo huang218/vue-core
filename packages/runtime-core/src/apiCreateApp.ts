@@ -200,6 +200,8 @@ export function createAppAPI<HostElement>(
   render: RootRenderFunction<HostElement>,
   hydrate?: RootHydrateFunction
 ): CreateAppFunction<HostElement> {
+  // rootComponent- 根组件  createApp(App).mount('#app')
+  // rootProps - 根组件props参数
   return function createApp(rootComponent, rootProps = null) {
     if (!isFunction(rootComponent)) {
       rootComponent = extend({}, rootComponent)
@@ -227,6 +229,7 @@ export function createAppAPI<HostElement>(
       })
     }
 
+    // 安装的插件
     const installedPlugins = new Set()
 
     let isMounted = false
@@ -294,6 +297,7 @@ export function createAppAPI<HostElement>(
         if (__DEV__) {
           validateComponentName(name, context.config)
         }
+        // 没有组件则表示要获取组件实例
         if (!component) {
           return context.components[name]
         }

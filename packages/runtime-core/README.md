@@ -2,6 +2,7 @@
 
 > This package is published only for typing and building custom renderers. It is NOT meant to be used in applications.
 
+> 有关完全公开的API，请参阅“src/index.ts”。
 For full exposed APIs, see `src/index.ts`.
 
 ## Building a Custom Renderer

@@ -199,6 +199,8 @@ export interface VNode<
   dynamicProps: string[] | null
   /**
    * @internal
+   * 当 dynamicChildren 参数为 null 或 undefined 时，表示该节点的子节点是静态的，
+   * 不会发生变化。这意味着在渲染过程中，不需要对这些子节点进行额外的比对和更新操作，从而提高渲染性能。
    */
   dynamicChildren: VNode[] | null
 
@@ -206,7 +208,7 @@ export interface VNode<
   appContext: AppContext | null
 
   /**
-   * @internal lexical scope owner instance
+   * @internal lexical scope owner instance 当前实例上下文
    */
   ctx: ComponentInternalInstance | null
 
@@ -416,6 +418,18 @@ const normalizeRef = ({
   ) as any
 }
 
+/**
+ * 创建基本虚拟节点对象
+ * @param type
+ * @param props
+ * @param children
+ * @param patchFlag
+ * @param dynamicProps
+ * @param shapeFlag
+ * @param isBlockNode
+ * @param needFullChildrenNormalization 是否需要进行虚拟节点子节点规范化
+ * @returns
+ */
 function createBaseVNode(
   type: VNodeTypes | ClassComponent | typeof NULL_DYNAMIC_COMPONENT,
   props: (Data & VNodeProps) | null = null,
@@ -458,12 +472,18 @@ function createBaseVNode(
   if (needFullChildrenNormalization) {
     normalizeChildren(vnode, children)
     // normalize suspense children
+    // __FEATURE_SUSPENSE__ -- 用于表示是否启用了悬挂（Suspense）特性。
+    // 悬挂是 Vue 3 中引入的一项功能，用于在异步组件加载过程中展示占位内容，以提供更好的用户体验。
+    // 悬挂功能允许在异步组件加载完成之前，显示一个指定的等待组件或占位内容，以避免页面的闪烁或空白。
+    // shapeFlag & ShapeFlags.SUSPENSE -- shapeFlag是否为 Suspense 悬挂类型vnode
     if (__FEATURE_SUSPENSE__ && shapeFlag & ShapeFlags.SUSPENSE) {
-      ;(type as typeof SuspenseImpl).normalize(vnode)
+      ;(type as typeof SuspenseImpl).normalize(vnode) // 处理悬挂 Suspense 内部插槽逻辑
     }
   } else if (children) {
     // compiled element vnode - if children is passed, only possible types are
     // string or Array.
+    //已编译元素vnode-如果传递子级，则只有可能的类型
+    //字符串或数组。
     vnode.shapeFlag |= isString(children)
       ? ShapeFlags.TEXT_CHILDREN
       : ShapeFlags.ARRAY_CHILDREN
@@ -553,10 +573,12 @@ function _createVNode(
 
   // class & style normalization.
   if (props) {
+    //对于反应对象或代理对象，我们需要克隆它以启用突变。
     // for reactive or proxy objects, we need to clone it to enable mutation.
     props = guardReactiveProps(props)!
     let { class: klass, style } = props
     if (klass && !isString(klass)) {
+      // class转为字符串
       props.class = normalizeClass(klass)
     }
     if (isObject(style)) {
@@ -565,23 +587,28 @@ function _createVNode(
       if (isProxy(style) && !isArray(style)) {
         style = extend({}, style)
       }
+      // 规范化style-虚拟节点
       props.style = normalizeStyle(style)
     }
   }
 
+  // 判断vnode 节点类型
   // encode the vnode type information into a bitmap
   const shapeFlag = isString(type)
-    ? ShapeFlags.ELEMENT
+    ? ShapeFlags.ELEMENT // vnode
     : __FEATURE_SUSPENSE__ && isSuspense(type)
-    ? ShapeFlags.SUSPENSE
+    ? ShapeFlags.SUSPENSE // Suspense
     : isTeleport(type)
-    ? ShapeFlags.TELEPORT
+    ? ShapeFlags.TELEPORT // Teleport
     : isObject(type)
-    ? ShapeFlags.STATEFUL_COMPONENT
+    ? ShapeFlags.STATEFUL_COMPONENT // 有状态的vnode
     : isFunction(type)
-    ? ShapeFlags.FUNCTIONAL_COMPONENT
+    ? ShapeFlags.FUNCTIONAL_COMPONENT // Function Component
     : 0
 
+  // DEV-(开发状态)
+  // shapeFlag & shapeFlags.STATEFUL_COMPONENT - (按位与操作，判断shapeFlag ?=== 4)
+  // isProxy - (判断是否代理)
   if (__DEV__ && shapeFlag & ShapeFlags.STATEFUL_COMPONENT && isProxy(type)) {
     type = toRaw(type)
     warn(
@@ -741,18 +768,21 @@ export function normalizeVNode(child: VNodeChild): VNode {
       Fragment,
       null,
       // #3666, avoid reference pollution when reusing vnode
+      // 截取整个child 防止上面bug
       child.slice()
     )
   } else if (typeof child === 'object') {
     // already vnode, this should be the most common since compiled templates
     // always produce all-vnode children arrays
+    //已经是vnode了，这应该是自编译模板以来最常见的
+    //始终生成所有vnode子数组
     return cloneIfMounted(child)
   } else {
     // strings and numbers
     return createVNode(Text, null, String(child))
   }
 }
-
+// 模板编译渲染fns的优化规范化
 // optimized normalization for template-compiled render fns
 export function cloneIfMounted(child: VNode): VNode {
   return (child.el === null && child.patchFlag !== PatchFlags.HOISTED) ||

@@ -322,6 +322,7 @@ function baseCreateRenderer(
 ): HydrationRenderer
 
 // implementation
+// 执行创建render函数
 function baseCreateRenderer(
   options: RendererOptions,
   createHydrationFns?: typeof createHydrationFunctions
@@ -350,8 +351,9 @@ function baseCreateRenderer(
     nextSibling: hostNextSibling,
     setScopeId: hostSetScopeId = NOOP,
     insertStaticContent: hostInsertStaticContent
-  } = options
+  } = options // options结构dom各种方法之类的
 
+  // 注意：此闭包中的函数应使用`constxxx=（）=>｛｝
   // Note: functions inside this closure should use `const xxx = () => {}`
   // style in order to prevent being inlined by minifiers.
   const patch: PatchFn = (

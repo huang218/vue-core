@@ -60,6 +60,11 @@ export function stringifyStyle(
   return ret
 }
 
+/**
+ * 使对象形式class转化为字符串形式
+ * @param value string | object | array
+ * @returns
+ */
 export function normalizeClass(value: unknown): string {
   let res = ''
   if (isString(value)) {
